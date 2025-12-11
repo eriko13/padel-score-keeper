@@ -447,6 +447,8 @@ const handleMatchEnd = () => {
   setLiveStatusOnSchedule(appState.currentMatchId, 'done', `Final: ${summary}`);
   saveCurrentMatchId(null);
   storage.set('currentMatch', null);
+  const nextPending = appState.schedule.find((m) => m.status === 'pending');
+  if (nextPending) startScheduledMatch(nextPending.id);
 };
 
 const buildApp = () => {
