@@ -100,7 +100,7 @@ const planEls = {
   noAd: $('#plan-no-ad'),
   type: $('#plan-type'),
   notes: $('#plan-notes'),
-  playerOptions: $('#plan-player-options'),
+  playerOptions: null,
   playerList: $('#plan-player-list'),
   playerNameInput: $('#plan-player-name'),
   playerRatingInput: $('#plan-player-rating'),
@@ -153,32 +153,6 @@ const getPlannedPlayers = () => {
   if (!appState.plan?.playerIds?.length) return rosterApi.getAvailable();
   const selected = new Set(appState.plan.playerIds);
   return players.filter((p) => selected.has(p.id) && p.isAvailable);
-};
-
-const renderPlanPlayerOptions = () => {
-  if (!planEls.playerOptions || !rosterApi) return;
-  const players = rosterApi.getPlayers();
-  const selected = new Set(appState.plan?.playerIds ?? []);
-  planEls.playerOptions.innerHTML = '';
-  players.forEach((player) => {
-    const label = document.createElement('label');
-    label.className = 'chip selectable';
-    label.setAttribute('tabindex', '0');
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.dataset.id = player.id;
-    checkbox.checked = selected.has(player.id);
-    const name = document.createElement('span');
-    name.textContent = `${player.name}${player.rating ? ` (${player.rating})` : ''}`;
-    label.append(checkbox, name);
-    label.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        checkbox.checked = !checkbox.checked;
-      }
-    });
-    planEls.playerOptions.append(label);
-  });
 };
 
 const cleanupPlanPlayerSelection = () => {
@@ -337,11 +311,9 @@ const renderSchedule = () => {
 const handlePlanSubmit = (event) => {
   event.preventDefault();
   if (!planEls.form) return;
-  const selectedIds = [...planEls.playerOptions.querySelectorAll('input[type="checkbox"]')]
-    .filter((cb) => cb.checked)
-    .map((cb) => cb.dataset.id);
+  const selectedIds = rosterApi ? rosterApi.getAvailable().map((p) => p.id) : [];
   if (selectedIds.length < 4) {
-    alert('Select at least 4 players.');
+    alert('Add at least 4 players.');
     return;
   }
   if (selectedIds.length % 2 !== 0) {
@@ -388,7 +360,6 @@ const handlePlanClear = () => {
   setPlanVisibility();
   renderSchedule();
   if (planEls.form) planEls.form.reset();
-  renderPlanPlayerOptions();
 };
 
 const syncScheduleFromTeams = (teams) => {
@@ -509,7 +480,6 @@ const buildApp = () => {
     onChange: () => notifyRosterChange(),
   });
 
-  renderPlanPlayerOptions();
   renderPlanPlayerList();
 
   scoreboardApi = initScoreboard({
@@ -550,7 +520,6 @@ const buildApp = () => {
   notifyRosterChange = () => {
     cleanupPlanPlayerSelection();
     matchSetupApi.refreshAvailable();
-    renderPlanPlayerOptions();
     renderPlanPlayerList();
   };
 
