@@ -13,6 +13,30 @@ let matchSetupApi = null;
 let rosterApi = null;
 let scoreboardApi = null;
 let historyApi = null;
+let currentView = 'home';
+let previousView = null;
+
+const viewLabels = {
+  home: 'Home',
+  setup: 'Match setup',
+  roster: 'Roster',
+  live: 'Live scoring',
+  history: 'History',
+};
+
+const breadcrumbEls = {
+  back: document.getElementById('breadcrumb-back'),
+  trail: document.getElementById('breadcrumb-trail'),
+};
+
+const updateBreadcrumb = () => {
+  if (!breadcrumbEls.trail) return;
+  const label = viewLabels[currentView] || currentView;
+  breadcrumbEls.trail.textContent = currentView === 'home' ? 'Home' : `Home / ${label}`;
+  if (breadcrumbEls.back) {
+    breadcrumbEls.back.disabled = currentView === 'home';
+  }
+};
 
 const appState = {
   plan: storage.get('plan', null),
@@ -27,11 +51,16 @@ const setActiveNav = (viewId) => {
 };
 
 const showView = (viewId) => {
+  if (viewId !== currentView) {
+    previousView = currentView;
+    currentView = viewId;
+  }
   document.querySelectorAll('.view').forEach((view) => {
     const isTarget = view.dataset.view === viewId || view.id === `view-${viewId}`;
     view.classList.toggle('hidden', !isTarget);
   });
   setActiveNav(viewId);
+  updateBreadcrumb();
 };
 
 const scrollToSection = (viewId) => {
@@ -403,6 +432,7 @@ const buildApp = () => {
   setupNav();
   renderRecent();
   showView('home');
+  updateBreadcrumb();
 
   let notifyRosterChange = () => {};
 
@@ -482,6 +512,16 @@ const buildApp = () => {
   planEls.summaryGenerate?.addEventListener('click', async () => { await matchSetupApi?.buildTeams(); scrollToSection('setup'); });
   planEls.summaryStartNext?.addEventListener('click', startNextPendingMatch);
   scheduleEls.startNext?.addEventListener('click', startNextPendingMatch);
+
+  breadcrumbEls.back?.addEventListener('click', () => {
+    if (previousView) {
+      const target = previousView;
+      previousView = null;
+      scrollToSection(target);
+    } else {
+      scrollToSection('home');
+    }
+  });
 
   if (appState.plan) {
     renderPlanSummary();

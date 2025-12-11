@@ -10,7 +10,7 @@
 <body>
   <a class="skip-link" href="#main">Skip to main content</a>
   <header class="top-bar">
-    <div class="brand" aria-label="Padel Score Keeper">
+    <button class="brand" aria-label="Padel Score Keeper" data-view="home">
       <div class="brand-mark" aria-hidden="true">
         <svg viewBox="0 0 64 64" role="img" aria-hidden="true">
           <circle cx="32" cy="32" r="32" class="mark-bg" />
@@ -19,8 +19,13 @@
         </svg>
       </div>
       <span class="brand-name">Padel Score Keeper</span>
-    </div>
+    </button>
   </header>
+
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    <button id="breadcrumb-back" class="ghost" aria-label="Go back">Back</button>
+    <div id="breadcrumb-trail" class="breadcrumb-trail" aria-live="polite">Home</div>
+  </nav>
 
   <main id="main">
     <section id="view-home" class="view" data-view="home" tabindex="-1">
