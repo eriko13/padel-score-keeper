@@ -127,6 +127,12 @@ const scheduleEls = {
   startNext: $('#start-next-match'),
 };
 
+const leaderboardEls = {
+  panel: $('#leaderboard-panel'),
+  list: $('#leaderboard-list'),
+  winner: $('#leaderboard-winner'),
+};
+
 const savePlan = (plan) => {
   appState.plan = plan;
   storage.set('plan', plan);
@@ -306,6 +312,7 @@ const renderSchedule = () => {
     scheduleEls.list.append(li);
   });
   setPlanVisibility();
+  renderLeaderboard();
 };
 
 const handlePlanSubmit = (event) => {
@@ -382,6 +389,163 @@ const setLiveStatusOnSchedule = (matchId, status, result) => {
   renderSchedule();
 };
 
+const tournamentComplete = () => (
+  appState.schedule.length > 0 && appState.schedule.every((m) => m.status === 'done')
+);
+
+const maybeShowLeaderboard = () => {
+  renderLeaderboard();
+  if (!tournamentComplete()) return;
+  const panel = document.getElementById('leaderboard-panel');
+  if (!panel) return;
+  showView('home');
+  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+
+const buildLeaderboard = () => {
+  const scheduleMatchIds = new Set(appState.schedule.map((m) => m.id));
+  const historyEntries = storage.get('history', []);
+  const matches = historyEntries.filter((entry) => {
+    if (entry.matchId && scheduleMatchIds.has(entry.matchId)) return true;
+    if (!entry.matchId) {
+      return appState.schedule.some((m) => (
+        m.teams[0].name === entry.teams?.A?.name && m.teams[1].name === entry.teams?.B?.name
+      ));
+    }
+    return false;
+  });
+  const teamStats = new Map();
+
+  const ensureTeam = (team) => {
+    if (!team || !team.id) return null;
+    if (!teamStats.has(team.id)) {
+      teamStats.set(team.id, {
+        id: team.id,
+        name: team.name,
+        color: team.color,
+        wins: 0,
+        losses: 0,
+        setsWon: 0,
+        setsLost: 0,
+        gamesWon: 0,
+        gamesLost: 0,
+      });
+    }
+    return teamStats.get(team.id);
+  };
+
+  appState.schedule.forEach((match) => {
+    ensureTeam(match.teams[0]);
+    ensureTeam(match.teams[1]);
+  });
+
+  matches.forEach((match) => {
+    const teamA = ensureTeam(match.teams.A);
+    const teamB = ensureTeam(match.teams.B);
+    if (!teamA || !teamB) return;
+    let setsWonA = 0;
+    let setsWonB = 0;
+    let gamesWonA = 0;
+    let gamesWonB = 0;
+    match.sets.forEach((set) => {
+      if (set.gamesA > set.gamesB) setsWonA += 1;
+      if (set.gamesB > set.gamesA) setsWonB += 1;
+      gamesWonA += set.gamesA;
+      gamesWonB += set.gamesB;
+    });
+    teamA.setsWon += setsWonA;
+    teamA.setsLost += setsWonB;
+    teamB.setsWon += setsWonB;
+    teamB.setsLost += setsWonA;
+    teamA.gamesWon += gamesWonA;
+    teamA.gamesLost += gamesWonB;
+    teamB.gamesWon += gamesWonB;
+    teamB.gamesLost += gamesWonA;
+
+    if (setsWonA === setsWonB) {
+      if (gamesWonA === gamesWonB) return;
+      if (gamesWonA > gamesWonB) {
+        teamA.wins += 1;
+        teamB.losses += 1;
+      } else {
+        teamB.wins += 1;
+        teamA.losses += 1;
+      }
+      return;
+    }
+
+    if (setsWonA > setsWonB) {
+      teamA.wins += 1;
+      teamB.losses += 1;
+    } else {
+      teamB.wins += 1;
+      teamA.losses += 1;
+    }
+  });
+
+  const leaderboard = [...teamStats.values()].sort((a, b) => {
+    const winDiff = b.wins - a.wins;
+    if (winDiff !== 0) return winDiff;
+    const setDiffA = a.setsWon - a.setsLost;
+    const setDiffB = b.setsWon - b.setsLost;
+    if (setDiffB !== setDiffA) return setDiffB - setDiffA;
+    const gameDiffA = a.gamesWon - a.gamesLost;
+    const gameDiffB = b.gamesWon - b.gamesLost;
+    if (gameDiffB !== gameDiffA) return gameDiffB - gameDiffA;
+    return a.name.localeCompare(b.name);
+  });
+
+  const top = leaderboard[0] ?? null;
+  const winners = top
+    ? leaderboard.filter((team) => (
+      team.wins === top.wins
+      && (team.setsWon - team.setsLost) === (top.setsWon - top.setsLost)
+      && (team.gamesWon - team.gamesLost) === (top.gamesWon - top.gamesLost)
+    ))
+    : [];
+
+  return { leaderboard, winners };
+};
+
+const renderLeaderboard = () => {
+  if (!leaderboardEls.panel) return;
+  const tournamentDone = appState.schedule.length > 0 && appState.schedule.every((m) => m.status === 'done');
+  leaderboardEls.panel.classList.toggle('hidden', !tournamentDone);
+  if (!tournamentDone) {
+    leaderboardEls.list.innerHTML = '';
+    leaderboardEls.winner.textContent = '';
+    return;
+  }
+
+  const { leaderboard, winners } = buildLeaderboard();
+  leaderboardEls.list.innerHTML = '';
+
+  leaderboard.forEach((team, index) => {
+    const li = document.createElement('li');
+    li.style.display = 'flex';
+    li.style.justifyContent = 'space-between';
+    li.style.alignItems = 'center';
+    const name = document.createElement('div');
+    name.textContent = `${index + 1}. ${team.name}`;
+    const stats = document.createElement('div');
+    stats.className = 'meta';
+    stats.textContent = `${team.wins}-${team.losses} · Sets ${team.setsWon}-${team.setsLost} · Games ${team.gamesWon}-${team.gamesLost}`;
+    if (winners.some((winner) => winner.id === team.id)) {
+      name.style.fontWeight = '700';
+    }
+    li.append(name, stats);
+    leaderboardEls.list.append(li);
+  });
+
+  if (winners.length === 0) {
+    leaderboardEls.winner.textContent = 'Complete';
+  } else if (winners.length === 1) {
+    leaderboardEls.winner.textContent = `Winner: ${winners[0].name}`;
+  } else {
+    leaderboardEls.winner.textContent = `Winners: ${winners.map((w) => w.name).join(', ')}`;
+  }
+};
+
 const startScheduledMatch = (matchId) => {
   if (!appState.plan) {
     alert('Save a plan first.');
@@ -435,6 +599,7 @@ const startLiveMatch = (payload) => {
 const handleMatchEnd = () => {
   const current = storage.get('currentMatch');
   if (!current) return;
+  const matchId = appState.currentMatchId ?? current.matchId ?? null;
   const finished = {
     ...current,
     finishedAt: new Date().toISOString(),
@@ -444,11 +609,12 @@ const handleMatchEnd = () => {
   historyApi?.refresh();
 
   const summary = finished.sets.map((s) => `${s.gamesA}-${s.gamesB}`).join(' ');
-  setLiveStatusOnSchedule(appState.currentMatchId, 'done', `Final: ${summary}`);
+  setLiveStatusOnSchedule(matchId, 'done', `Final: ${summary}`);
   saveCurrentMatchId(null);
   storage.set('currentMatch', null);
   const nextPending = appState.schedule.find((m) => m.status === 'pending');
   if (nextPending) startScheduledMatch(nextPending.id);
+  maybeShowLeaderboard();
 };
 
 const buildApp = () => {
