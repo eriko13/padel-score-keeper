@@ -24,14 +24,112 @@
 
   <main id="main">
     <section id="view-home" class="view" data-view="home" tabindex="-1">
-      <div class="panel">
-        <h1>Set up padel matches fast</h1>
-        <p>Generate teams, score live, and keep history—all in one place.</p>
+      <div class="panel" id="plan-panel">
+        <h1>Plan your day</h1>
+        <p>Fill this once, then run your round robin.</p>
+        <form id="plan-form" class="stack" aria-label="Plan the day">
+          <label class="field">
+            <span>Event name</span>
+            <input id="plan-name" name="name" required autocomplete="off" placeholder="Saturday Padel" />
+          </label>
+          <label class="field">
+            <span>Date and time</span>
+            <input id="plan-date" name="date" type="datetime-local" />
+          </label>
+          <label class="field">
+            <span>Location / court</span>
+            <input id="plan-court" name="court" required placeholder="Court 1" />
+          </label>
+          <div class="field">
+            <div class="field-label">Format</div>
+            <select id="plan-format" name="format">
+              <option value="best-of-3">Best of 3</option>
+              <option value="single-set">Single set to 6</option>
+            </select>
+          </div>
+          <label class="field checkbox">
+            <input type="checkbox" id="plan-no-ad" name="noAd" />
+            <span>No-ad scoring</span>
+          </label>
+          <label class="field">
+            <span>Tournament type</span>
+            <select id="plan-type" name="type">
+              <option value="round-robin">Round robin (every team plays)</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Notes</span>
+            <textarea id="plan-notes" name="notes" rows="3" placeholder="Balls, snacks, timing"></textarea>
+          </label>
+          <div class="field">
+            <div class="field-label">Select players</div>
+            <div id="plan-player-options" class="chips" aria-live="polite"></div>
+            <div class="help-text">Pick an even number, at least 4.</div>
+          </div>
+          <div class="actions">
+            <button type="submit" class="primary">Save plan</button>
+            <button type="button" class="ghost" id="plan-reset">Reset</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="panel hidden" id="plan-summary" aria-live="polite">
+        <div class="panel-header">
+          <h2>Plan summary</h2>
+          <div class="actions-inline">
+            <button class="secondary" id="plan-edit">Edit plan</button>
+            <button class="ghost" id="plan-clear">Clear</button>
+          </div>
+        </div>
+        <div class="summary-grid">
+          <div>
+            <div class="label">Event</div>
+            <div id="summary-name" class="value"></div>
+          </div>
+          <div>
+            <div class="label">Date & time</div>
+            <div id="summary-date" class="value"></div>
+          </div>
+          <div>
+            <div class="label">Court</div>
+            <div id="summary-court" class="value"></div>
+          </div>
+          <div>
+            <div class="label">Format</div>
+            <div id="summary-format" class="value"></div>
+          </div>
+          <div>
+            <div class="label">Tournament</div>
+            <div id="summary-type" class="value"></div>
+          </div>
+          <div>
+            <div class="label">Notes</div>
+            <div id="summary-notes" class="value"></div>
+          </div>
+        </div>
+        <div>
+          <div class="label">Players</div>
+          <div id="summary-players" class="chips"></div>
+        </div>
         <div class="actions">
-          <button class="primary" data-view="setup">Create match</button>
-          <button class="ghost" data-view="roster">Manage roster</button>
+          <button class="primary" id="summary-generate">Generate teams</button>
+          <button class="secondary" id="summary-start-next">Start next match</button>
+          <button class="ghost" data-view="history">View history</button>
         </div>
       </div>
+
+      <div class="panel hidden" id="schedule-panel">
+        <div class="panel-header">
+          <h3>Round robin schedule</h3>
+          <div class="badge" id="schedule-count"></div>
+        </div>
+        <ul id="schedule-list" class="list"></ul>
+        <div class="actions">
+          <button class="primary" id="start-next-match">Start next pending</button>
+          <button class="ghost" data-view="setup">Adjust teams</button>
+        </div>
+      </div>
+
       <div class="panel" aria-live="polite">
         <div class="panel-header">
           <h2>Recent matches</h2>

@@ -15,6 +15,8 @@
 
 * { box-sizing: border-box; }
 
+.hidden { display: none !important; }
+
 body {
   margin: 0;
   background: var(--light);
@@ -71,6 +73,7 @@ a { color: var(--blue); }
 
 main { padding: 1.5rem; display: grid; gap: 1rem; }
 .view { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+.view.hidden { display: none; }
 
 .panel {
   background: white;
@@ -115,6 +118,13 @@ button:hover { transform: translateY(-1px); }
   border-radius: 10px;
   border: 1px solid #d1d5db;
 }
+.field textarea {
+  padding: 0.6rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  resize: vertical;
+  min-height: 90px;
+}
 .field.checkbox { align-items: center; }
 .field.checkbox input { width: auto; }
 
@@ -132,6 +142,9 @@ button:hover { transform: translateY(-1px); }
   color: var(--text);
 }
 .chip.active { border-color: var(--blue); color: var(--blue); }
+.chip.selectable { display: inline-flex; align-items: center; gap: 0.35rem; cursor: pointer; }
+.chip.selectable input { margin: 0; }
+.chip.selectable:focus-within { outline: 2px solid var(--blue); outline-offset: 2px; }
 
 .grid { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
 
@@ -162,6 +175,16 @@ button:hover { transform: translateY(-1px); }
 .table th, .table td { padding: 0.5rem; border-bottom: 1px solid #e5e7eb; text-align: left; }
 
 .dialog-open { overflow: hidden; }
+
+.help-text { color: var(--muted); font-size: 0.9rem; }
+.summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.75rem; margin-bottom: 1rem; }
+.summary-grid .label { font-size: 0.9rem; color: var(--muted); }
+.summary-grid .value { font-weight: 600; }
+.status-badge { border-radius: 999px; padding: 0.2rem 0.65rem; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.35rem; }
+.status-pending { background: #fff7ed; color: #b45309; border: 1px solid #fed7aa; }
+.status-live { background: #ecfeff; color: #0ea5e9; border: 1px solid #bae6fd; }
+.status-done { background: #ecfdf3; color: #15803d; border: 1px solid #bbf7d0; }
+.meta { color: var(--muted); font-size: 0.9rem; }
 
 @media (max-width: 720px) {
   .top-bar { flex-wrap: wrap; gap: 0.75rem; }

@@ -8,6 +8,7 @@ export const initMatchSetup = ({
   elements,
   getAvailablePlayers,
   onStartMatch,
+  onTeamsChange,
 }) => {
   const state = {
     teams: [],
@@ -66,6 +67,8 @@ export const initMatchSetup = ({
     }
     state.teams = teams;
     renderTeams();
+    onTeamsChange?.(state.teams);
+    return state.teams;
   };
 
   const renameTeams = async () => {
@@ -75,11 +78,13 @@ export const initMatchSetup = ({
     }
     state.teams = renamed;
     renderTeams();
+    onTeamsChange?.(state.teams);
   };
 
   const reset = () => {
     state.teams = [];
     elements.teamsContainer.innerHTML = '';
+    onTeamsChange?.(state.teams);
   };
 
   elements.generateTeams.addEventListener('click', buildTeams);
@@ -105,5 +110,8 @@ export const initMatchSetup = ({
   return {
     refreshAvailable: renderAvailable,
     getTeams: () => [...state.teams],
+    buildTeams,
+    reset,
+    renameTeams,
   };
 };
