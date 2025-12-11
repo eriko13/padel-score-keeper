@@ -101,6 +101,10 @@ const planEls = {
   type: $('#plan-type'),
   notes: $('#plan-notes'),
   playerOptions: $('#plan-player-options'),
+  playerList: $('#plan-player-list'),
+  playerNameInput: $('#plan-player-name'),
+  playerRatingInput: $('#plan-player-rating'),
+  addPlayer: $('#plan-add-player'),
   reset: $('#plan-reset'),
   summary: $('#plan-summary'),
   summaryName: $('#summary-name'),
@@ -174,6 +178,66 @@ const renderPlanPlayerOptions = () => {
       }
     });
     planEls.playerOptions.append(label);
+  });
+};
+
+const cleanupPlanPlayerSelection = () => {
+  if (!appState.plan || !rosterApi) return;
+  const validIds = new Set(rosterApi.getPlayers().map((p) => p.id));
+  const filtered = (appState.plan.playerIds || []).filter((id) => validIds.has(id));
+  if (filtered.length !== (appState.plan.playerIds || []).length) {
+    savePlan({ ...appState.plan, playerIds: filtered });
+    renderPlanSummary();
+  }
+};
+
+const handlePlanRemovePlayer = (playerId) => {
+  if (!rosterApi) return;
+  rosterApi.removePlayer(playerId);
+  cleanupPlanPlayerSelection();
+};
+
+const handlePlanAddPlayer = () => {
+  if (!rosterApi) return;
+  const name = planEls.playerNameInput?.value.trim() ?? '';
+  const rating = planEls.playerRatingInput?.value.trim() ?? '';
+  if (!name) {
+    alert('Enter a player name.');
+    return;
+  }
+  rosterApi.addPlayer({ name, rating });
+  if (planEls.playerNameInput) planEls.playerNameInput.value = '';
+  if (planEls.playerRatingInput) planEls.playerRatingInput.value = '';
+};
+
+const renderPlanPlayerList = () => {
+  if (!planEls.playerList || !rosterApi) return;
+  const players = rosterApi.getPlayers();
+  planEls.playerList.innerHTML = '';
+  if (!players.length) {
+    const li = document.createElement('li');
+    li.textContent = 'No players yet. Add a name to get started.';
+    planEls.playerList.append(li);
+    return;
+  }
+
+  players.forEach((player) => {
+    const li = document.createElement('li');
+    li.style.display = 'flex';
+    li.style.justifyContent = 'space-between';
+    li.style.alignItems = 'center';
+
+    const info = document.createElement('div');
+    info.textContent = player.rating ? `${player.name} · ${player.rating}` : player.name;
+
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'ghost';
+    removeBtn.type = 'button';
+    removeBtn.textContent = 'Remove';
+    removeBtn.addEventListener('click', () => handlePlanRemovePlayer(player.id));
+
+    li.append(info, removeBtn);
+    planEls.playerList.append(li);
   });
 };
 
@@ -446,6 +510,7 @@ const buildApp = () => {
   });
 
   renderPlanPlayerOptions();
+  renderPlanPlayerList();
 
   scoreboardApi = initScoreboard({
     elements: {
@@ -483,8 +548,10 @@ const buildApp = () => {
   });
   refreshSetup = matchSetupApi.refreshAvailable;
   notifyRosterChange = () => {
+    cleanupPlanPlayerSelection();
     matchSetupApi.refreshAvailable();
     renderPlanPlayerOptions();
+    renderPlanPlayerList();
   };
 
   refreshSetup();
@@ -507,6 +574,19 @@ const buildApp = () => {
 
   planEls.form?.addEventListener('submit', handlePlanSubmit);
   planEls.reset?.addEventListener('click', () => planEls.form?.reset());
+  planEls.addPlayer?.addEventListener('click', handlePlanAddPlayer);
+  planEls.playerRatingInput?.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      handlePlanAddPlayer();
+    }
+  });
+  planEls.playerNameInput?.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      handlePlanAddPlayer();
+    }
+  });
   planEls.edit?.addEventListener('click', handlePlanEdit);
   planEls.clear?.addEventListener('click', handlePlanClear);
   planEls.summaryGenerate?.addEventListener('click', async () => { await matchSetupApi?.buildTeams(); scrollToSection('setup'); });

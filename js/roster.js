@@ -56,19 +56,26 @@ export const initRoster = ({
     onChange();
   };
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    const name = formEl.elements.name.value.trim();
-    const rating = formEl.elements.rating.value.trim();
-    if (!name) return;
+  const addPlayer = ({ name, rating }) => {
+    const trimmedName = name.trim();
+    const trimmedRating = rating.trim();
+    if (!trimmedName) return false;
     state.players.push({
       id: uid(),
-      name,
-      rating: rating || null,
+      name: trimmedName,
+      rating: trimmedRating || null,
       isAvailable: true,
     });
-    formEl.reset();
     saveAndRender();
+    return true;
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    const name = formEl.elements.name.value;
+    const rating = formEl.elements.rating.value;
+    if (!addPlayer({ name, rating })) return;
+    formEl.reset();
   };
 
   const handleToggle = (id) => {
@@ -143,5 +150,7 @@ export const initRoster = ({
     getPlayers: () => [...state.players],
     getAvailable: () => state.players.filter((p) => p.isAvailable),
     setPlayers: (players) => { state.players = players; saveAndRender(); },
+    addPlayer,
+    removePlayer: handleDelete,
   };
 };

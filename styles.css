@@ -135,7 +135,11 @@ button:hover { transform: translateY(-1px); }
   resize: vertical;
   min-height: 90px;
 }
-.field.checkbox { align-items: center; }
+.field.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
 .field.checkbox input { width: auto; }
 
 .stack { display: grid; gap: 0.75rem; }

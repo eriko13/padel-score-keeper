@@ -71,6 +71,24 @@
             <div id="plan-player-options" class="chips" aria-live="polite"></div>
             <div class="help-text">Pick an even number, at least 4.</div>
           </div>
+          <div class="field">
+            <div class="field-label">Add or remove players</div>
+            <div class="stack">
+              <label class="field">
+                <span>Name</span>
+                <input id="plan-player-name" name="playerName" autocomplete="off" placeholder="Player name" />
+              </label>
+              <label class="field">
+                <span>Rating (optional)</span>
+                <input id="plan-player-rating" name="playerRating" type="number" min="1" max="10" step="0.5" placeholder="7.5" />
+              </label>
+              <div class="actions-inline">
+                <button type="button" class="secondary" id="plan-add-player">Add player</button>
+                <div class="help-text">Players here sync with the roster.</div>
+              </div>
+              <ul id="plan-player-list" class="list" aria-live="polite"></ul>
+            </div>
+          </div>
           <div class="actions">
             <button type="submit" class="primary">Save plan</button>
             <button type="button" class="ghost" id="plan-reset">Reset</button>
