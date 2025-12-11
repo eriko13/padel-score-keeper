@@ -8,21 +8,20 @@ import { uid } from './utils.js';
 
 const $ = (selector) => document.querySelector(selector);
 
-const views = ['home', 'roster', 'setup', 'live', 'history'];
-
 let refreshSetup = null;
 
-const toggleView = (viewId) => {
-  // Show the selected view, hide the rest
-  document.querySelectorAll('.view').forEach((section) => {
-    section.classList.toggle('hidden', section.dataset.view !== viewId);
-  });
-  // Highlight the active nav button
+const setActiveNav = (viewId) => {
   document.querySelectorAll('.nav-button').forEach((btn) => {
     btn.classList.toggle('active', btn.dataset.view === viewId);
   });
+};
+
+const scrollToSection = (viewId) => {
   const target = document.getElementById(`view-${viewId}`) || document.querySelector(`.view[data-view="${viewId}"]`);
-  if (target) target.focus({ preventScroll: true });
+  if (!target) return;
+  target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  target.focus({ preventScroll: true });
+  setActiveNav(viewId);
   if (viewId === 'setup' && refreshSetup) refreshSetup();
 };
 
@@ -41,7 +40,7 @@ const renderRecent = () => {
 const setupNav = () => {
   // Only bind to clickable controls, not the view sections themselves.
   document.querySelectorAll('button[data-view], [role="button"][data-view]').forEach((btn) => {
-    btn.addEventListener('click', () => toggleView(btn.dataset.view));
+    btn.addEventListener('click', () => scrollToSection(btn.dataset.view));
   });
 };
 
@@ -63,7 +62,7 @@ const buildApp = () => {
 
   setupNav();
   renderRecent();
-  toggleView('home');
+  setActiveNav('home');
 
   let notifyRosterChange = () => {};
 
@@ -110,7 +109,7 @@ const buildApp = () => {
     currentCourt = payload.court;
     document.getElementById('live-court').textContent = currentCourt;
     storage.set('currentMatch', { ...engine.state, court: currentCourt });
-    toggleView('live');
+    scrollToSection('live');
   };
 
   const matchSetup = initMatchSetup({
@@ -132,6 +131,8 @@ const buildApp = () => {
   notifyRosterChange = () => {
     matchSetup.refreshAvailable();
   };
+
+  refreshSetup();
 
   const history = initHistory({
     listEl: $('#history-list'),

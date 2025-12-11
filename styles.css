@@ -71,7 +71,6 @@ a { color: var(--blue); }
 
 main { padding: 1.5rem; display: grid; gap: 1rem; }
 .view { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
-.view.hidden { display: none; }
 
 .panel {
   background: white;
